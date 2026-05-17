@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -16,7 +16,10 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
-connectDB();
+connectDB().catch(err => {
+  console.error('Failed to connect to MongoDB on startup:', err.message);
+  // Do not exit the process, let the server start and we can debug
+});
 
 // Routes
 app.use('/api/candidates', candidateRoutes);
@@ -28,6 +31,14 @@ app.get('/api', (req, res) => {
   res.json({
     message: 'Welcome to AI Candidate Shortlisting API'
   });
+});
+
+// Serve frontend static files in production
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // Start Server
